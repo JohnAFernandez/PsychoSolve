@@ -1,8 +1,8 @@
 #include <iostream>
 
 // grid size limits
-const char MAX_ROWS = 100;
-const char MAX_COLS = 100;
+const char MAX_ROWS = 255;
+const char MAX_COLS = 255;
 const int MAX_GRID_SIZE = MAX_ROWS * MAX_COLS;
 
 // movement numbers and basic info
@@ -18,13 +18,15 @@ const char START = 1;
 const char GOAL = 2;
 const char EDGE = 3;
 const char MOVA = 4;
+const char SIMEDGE = 5;
 
 // block types, psychopath 2, will I even get here?
-const char HOLE = 5;
-const char UPLEFT = 6;
-const char UPRIGHT = 7;
-const char DNRIGHT = 8;
-const char DNLEFT = 9;
+const char HOLE = 6;
+const char UPLEFT = 7;
+const char UPRIGHT = 8;
+const char DNRIGHT = 9;
+const char DNLEFT = 10;
+
 
 // main struct to keep track of all the level info
 struct level_info {
@@ -32,23 +34,14 @@ struct level_info {
   //rows and columns
   char row_count;
   char col_count;
-  row_struct rows[MAX_ROWS];
-  col_struct cols[MAX_COLS];
-  
+  location_info grid[MAX_GRID_SIZE];
+   
   //start and end
   location start;
   location end;
     
 } level_info;
 
-// helper structs for rows and columns, so we can store the block types
-struct row_struct {  
-  char block_type[MAX_COLS];
-} row_struct;
-
-struct col_struct {
-  char block_type[MAX_ROWS];
-} col_struct;
 
 // the path array
 struct possible_path { 
@@ -59,6 +52,11 @@ struct possible_path {
 struct decision_point {
   char movement[MAX_CHOICES];
 } decision_point;
+
+struct location_info {
+  location coord;
+  char type;
+} location_info
 
 struct location {
   char x;
@@ -76,10 +74,8 @@ void find_start_and_end();
 // PROGRAM START
 
 int main() {
-  level_info *level = nullptr;
+  level_info level;
   process_incoming(level);
-  
-  find_start_and_end(level);
   
   return 0;
 }
@@ -103,12 +99,6 @@ void process_incoming(level_info* level){
       k++;
     }
   }
-}
-
-void find_start_and_end() {
-  location start, end;
-  
-  search_level(START);
 }
 
 void search_level(){
