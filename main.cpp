@@ -33,8 +33,21 @@ const char UPRIGHT = 9;
 const char DNRIGHT = 10;
 const char DNLEFT = 11;
 
-const 
+//const 
 
+// locations
+struct location {
+  char x;
+  char y;
+  char type;
+};
+
+// list locations by type
+struct grid_group {
+    int count;
+    location xy[MAX_GRID_SIZE]; // Again, rows and *then* columns 
+                       
+};
 
 // main struct to keep track of all the level info
 struct level_info {
@@ -43,8 +56,8 @@ struct level_info {
   char row_count;
   char col_count;
   int grid_size;
-  char type[MAX_GRID_SIZE]; // stores info with do rows and then columns
-  
+  char type[MAX_GRID_SIZE]; // stores info. Do rows and *then* columns
+                            // 
   // secondary level info structure
   grid_group not_block_list;
   grid_group regulars;
@@ -63,38 +76,30 @@ struct level_info {
   //start and end
   location start;  
     
-} level_info;
+};
 
 
 // the path array
 struct possible_path { 
   char movement[MAX_CHOICES];
-} possible_path;
+};
 
-// locations
-struct location {
-  char x;
-  char y;
-} location;
 
-// list locations by type
-struct grid_group {
- int count;
- location xy[MAX_GRID_SIZE];
-} grid_group;
+
+
 
 struct decision_matrix {
   int block[9];
-} decision_block;
+};
 
 // Header Functions
-
 void process_incoming(level_info* level);
 
 //fills up the level with simulated edges that help the computer reduce the complexity of the level.
 void create_simedges(level_info* level);
 
-location find_areas(); // not yet written, 
+location find_areas(); // not yet written, splits levels up into "areas"
+                       // that it will solve one at a time
 
 location move(location source, char direction); 
 
@@ -102,10 +107,16 @@ location move(location source, char direction);
 
 int main() {
   level_info level;
+  level_info create_level(level);
+  level_info* levelp ;
+
+  // at some point we may want a dictionary that helps it
+  // load_dictionary();  
   
-  process_incoming(level);
-  
-  create_simedges_whole(level);
+  process_incoming(levelp); // populates level from file
+   
+  create_simedges_whole(levelp); // goes through the whole level and 
+                                 // allows computer to know which blocks to ignore
   
   
   return 0;
@@ -118,11 +129,10 @@ void process_incoming(level_info* level){
   level->col_count = 0;
     
   // file reading and stuffing loop should go here.....
-  //blarg, making sure that col_count and row_count are set
-  // has to be passed to the program because it can be rectangular
+  // making sure that col_count and row_count are set
   
   if (level->row_count < 3 || level->col_count < 3) {
-    int3(); // let's just start with this while I'm still new at this
+    Int3(); // let's just start with this while I'm still new at this
   }
   
   level->grid_size = level->col_count * level->row_count;
@@ -141,7 +151,7 @@ void process_incoming(level_info* level){
   int k = 0;
   for(int i = 0; i < level->col_count; i++) {
     for(int j = 0; j < level->row_count; j++) {
-      level->type[k] = //pull type from       
+        level->type[k] = 0; //this is eventually where we are going to pull the type
       k++;
       switch(level->type[k]){
           // there is only one start
@@ -151,8 +161,8 @@ void process_incoming(level_info* level){
           level->regulars.count++;
           break;
         case 2:
-          level->start.xy.x = i;
-          level->start.xy.y = j;
+          level->start.x = i;
+          level->start.y = j;
           break;
         case 3:
           level->goals.xy[level->goals.count].x = i;
@@ -194,7 +204,7 @@ void process_incoming(level_info* level){
           break;
         case 11:
           level->dnlefts.xy[levels->dnlefts.count].x = i;
-          level->dnlefts.xy[levels->dnlefts.count].y = k;
+          level->dnlefts.xy[levels->dnlefts.count].y = j;
           level->dnlefts.count++;
           break;
         case 0:        
@@ -234,34 +244,41 @@ void create_simedges_whole(level_info* level){
 }
 
 // helper function that just tells us the next location.
-location move(location original_source, char direction, level_info* level){ 
-  
-  int source = (original_source.xy.x * col_count) + original_source.xy.y;
-  
-  switch (direction)
-    case UP:
-      grid_group = node_search(original_source, level);
-        if (grid_group.count == 0){
-        }
-        }
-      }
-  
-      break;
-    case DOWN:
-        
-      break;
-    case LEFT:
+location move(location original_source, char direction, level_info* level) {
+
+    location target_location = get_move_target(original_source, direction);
     
-      break;
-    case RIGHT:
-      break;
 }
 
-grid_group find_areas() {  
+location get_move_target(location original_source, char direction){
+ 
+    switch (direction)
+        case UP:
+      
+    
+  
+      break;
+        case DOWN:
+        
+      break;
+        case LEFT:
+    
+      break;
+        case RIGHT:
+      break;
+
+      lookup_location_with_xy();
+}
+
+location get_move_target(location original_source, char direction) {
+
+}
+
+find_areas() {  
     
 }
         
-grid_group node_search(location initial, level_info* level) {
+node_search(location initial, level_info* level) {
   grid_group result = {};
   for (int i = 0; i < [MAX_GRID_SIZE])
     if (initial.x == level->node_incomplete.xy.x && initial.y == level->node_incomplete.xy.y) {
