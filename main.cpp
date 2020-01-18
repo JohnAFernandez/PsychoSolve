@@ -1,8 +1,8 @@
 #include <iostream>
 
 // grid size limits
-const char MAX_ROWS = 255;
-const char MAX_COLS = 255;
+const char MAX_ROWS = 254;
+const char MAX_COLS = 254;
 const int MAX_GRID_SIZE = MAX_ROWS * MAX_COLS;
 
 // movement numbers and basic info
@@ -33,21 +33,28 @@ const char UPRIGHT = 9;
 const char DNRIGHT = 10;
 const char DNLEFT = 11;
 
-//const 
-
-// locations
+// stores all the information required for a grid location
 struct location {
   char x;
   char y;
   char type;
 };
 
+const location INVALID_LOCATION = {255, 255, NOT_A_BLOCK};
+
+// for passing coordinates
+struct proto_location {
+  char x = 255;
+  char y = 255;
+}
+
 // list locations by type
 struct grid_group {
     int count;
-    location xy[MAX_GRID_SIZE]; // Again, rows and *then* columns 
+    proto_location xy[MAX_GRID_SIZE]; // Again, rows and *then* columns 
                        
 };
+
 
 // main struct to keep track of all the level info
 struct level_info {
@@ -74,7 +81,7 @@ struct level_info {
   grid_group node_incomplete;
   
   //start and end
-  location start;  
+  location start;
     
 };
 
@@ -84,16 +91,23 @@ struct possible_path {
   char movement[MAX_CHOICES];
 };
 
-
-
-
-
+// to help us figure out where we should go next.
 struct decision_matrix {
   int block[9];
 };
 
+////////////////////////////////////////////////////////////////////////////
 // Header Functions
+
+////////////////////////////////////////////////////////////////////////////
+// Flow Control Functions
+
+// process the input file.
 void process_incoming(level_info* level);
+
+
+////////////////////////////////////////////////////////////////////////////
+// Level Analyzing Functions
 
 //fills up the level with simulated edges that help the computer reduce the complexity of the level.
 void create_simedges(level_info* level);
@@ -101,27 +115,60 @@ void create_simedges(level_info* level);
 location find_areas(); // not yet written, splits levels up into "areas"
                        // that it will solve one at a time
 
-location move(location source, char direction); 
 
+////////////////////////////////////////////////////////////////////////////
+// Coordinate manipulation helper functions
+
+// Figure out where I move to.
+location move(location source, char direction, level_info* level);
+
+// returns the level location from the 
+location lookup_location_with_xy(proto_location* grid, level_info* level)
+
+//
+
+////////////////////////////////////////////////////////////////////////////
 // PROGRAM START
+//
 
 int main() {
   level_info level;
-  level_info create_level(level);
-  level_info* levelp ;
+  level_info create_level(&level);
 
   // at some point we may want a dictionary that helps it
   // load_dictionary();  
   
-  process_incoming(levelp); // populates level from file
+  // process the input file.
+  process_incoming(&level);
    
-  create_simedges_whole(levelp); // goes through the whole level and 
+  create_simedges_whole(&level); // goes through the whole level and 
                                  // allows computer to know which blocks to ignore
   
   
   return 0;
 }
 
+
+// initialize the level_info struct
+void create_level(level_info* level) {
+    level->row_count = 0;
+    level->col_count = 0;
+    level->grid_size = 0;
+    level->type = {};
+    level->not_block_list = {};
+    level->regulars = {};
+    level->goals = {};
+    level->edges = {};
+    level->movas = {};
+    level->simedges = {};
+    level->holes = {};
+    level->uplefts = {};
+    level->uprights = {};
+    level->dnrights = {};
+    level->dnlefts = {};
+}
+
+// process the input file.
 void process_incoming(level_info* level){
   
   memset(level->type, 0, MAX_GRID_SIZE);
@@ -246,31 +293,67 @@ void create_simedges_whole(level_info* level){
 // helper function that just tells us the next location.
 location move(location original_source, char direction, level_info* level) {
 
-    location target_location = get_move_target(original_source, direction);
+
+    // this function gets the next location, also checks for the boundary
+    location target_location = get_move_target(original_source, direction, level);
     
+    // check return value to make sure that we didn't hit a boundary.
+    if (target_location = INVALID_LOCATION) {
+    return INVALID_LOCATION
+    }
+
+    
+
+
 }
 
-location get_move_target(location original_source, char direction){
- 
+location get_move_target(location original_source, char direction, level_info* level) {
+
+    static proto_location temp = {};
+    location return_location = {0, 0};
+
     switch (direction)
         case UP:
-      
-    
-  
-      break;
-        case DOWN:
-        
-      break;
-        case LEFT:
-    
-      break;
-        case RIGHT:
-      break;
+            // hit the boundry
+            if (original_source.y == 0) {
+                return INVALID_LOCATION;
+            }
+            // store the values in temp 
+            temp.x = original_source.x;
+            temp.y = original_source.y - 1;
+            break;
 
-      lookup_location_with_xy();
+        case DOWN:
+            if (original_source.y == 254) {
+                return INVALID_LOCATION;
+            }
+         
+            temp.x = original_source.x;
+            temp.y = original_source.y + 1;
+            break;
+
+        case LEFT:
+            if (original_source.x == 0) {
+                return INVALID_LOCATION;
+            }
+            temp.x = original_source.x - 1;
+            temp.y = original_source.y;
+            break;
+
+        case RIGHT:
+            if (original_source.x == 254) {
+                return INVALID_LOCATION;
+            }
+            temp.x = original_source.x + 1;
+            temp.y = original_source.y;
+            break;
+
+      return lookup_location_with_xy(&temp, level);
 }
 
-location get_move_target(location original_source, char direction) {
+location lookup_location_with_xy(proto_location *grid, level_info* level) {
+    
+
 
 }
 
@@ -291,3 +374,4 @@ node_search(location initial, level_info* level) {
 void append_grid_group {
 
 }
+
