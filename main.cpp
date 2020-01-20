@@ -33,6 +33,10 @@ const char UPRIGHT = 9;
 const char DNRIGHT = 10;
 const char DNLEFT = 11;
 
+// other theoretical block types.....
+const char BOMB = 12; // basically a moveable hole.
+const char ICE = 13;  // you slide on the ground and cannot change direction
+
 // stores all the information required for a grid location
 struct location {
   char x;
@@ -40,7 +44,7 @@ struct location {
   char type;
 };
 
-const location INVALID_LOCATION = {255, 255, NOT_A_BLOCK};
+#define INVALID_LOCATION = location.new {255, 255, NOT_A_BLOCK};
 
 // for passing coordinates
 struct proto_location {
@@ -80,8 +84,8 @@ struct level_info {
   
   grid_group node_incomplete;
   
-  //start and end
-  location start;
+  //start
+  proto_location start;
     
 };
 
@@ -97,10 +101,13 @@ struct decision_matrix {
 };
 
 ////////////////////////////////////////////////////////////////////////////
-// Header Functions
+// Header within the cpp
+////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////
 // Flow Control Functions
+
+void create_level_struct(level_info* level);
 
 // process the input file.
 void process_incoming(level_info* level);
@@ -109,7 +116,7 @@ void process_incoming(level_info* level);
 ////////////////////////////////////////////////////////////////////////////
 // Level Analyzing Functions
 
-//fills up the level with simulated edges that help the computer reduce the complexity of the level.
+// changes locations in the level that can never be crossed or altered into "simedges"
 void create_simedges(level_info* level);
 
 location find_areas(); // not yet written, splits levels up into "areas"
@@ -119,13 +126,19 @@ location find_areas(); // not yet written, splits levels up into "areas"
 ////////////////////////////////////////////////////////////////////////////
 // Coordinate manipulation helper functions
 
-// Figure out where I move to.
-location move(location source, char direction, level_info* level);
+// Figure out which block I'm thinking about
+location move_virtual(location source, char direction, level_info* level);
 
-// returns the level location from the 
-location lookup_location_with_xy(proto_location* grid, level_info* level)
+// Figure out if the player can actually move
+location move_actual(location source, char direction, level_info* level)
 
-//
+// returns the level location from the coordinates.
+location lookup_location_with_xy(proto_location* grid, level_info* level);
+
+// returns the type from the coordinates.
+char find_type_with_xy(proto_location* grid, level_info* level);
+
+
 
 ////////////////////////////////////////////////////////////////////////////
 // PROGRAM START
@@ -150,7 +163,7 @@ int main() {
 
 
 // initialize the level_info struct
-void create_level(level_info* level) {
+void create_level_struct(level_info* level) {
     level->row_count = 0;
     level->col_count = 0;
     level->grid_size = 0;
@@ -170,11 +183,8 @@ void create_level(level_info* level) {
 
 // process the input file.
 void process_incoming(level_info* level){
-  
-  memset(level->type, 0, MAX_GRID_SIZE);
-  level->row_count = 0;
-  level->col_count = 0;
-    
+      
+  // NOT FINISHED!! 
   // file reading and stuffing loop should go here.....
   // making sure that col_count and row_count are set
   
@@ -196,10 +206,10 @@ void process_incoming(level_info* level){
     
   // now just placing it in our level info struct
   int k = 0;
-  for(int i = 0; i < level->col_count; i++) {
-    for(int j = 0; j < level->row_count; j++) {
-        level->type[k] = 0; //this is eventually where we are going to pull the type
-      k++;
+  for (int i = 0; i < level->row_count; i++) {
+    for (int j = 0; j < level->col_count; j++) {
+      level->type[k] = 0; // NOT FINISHED!! this is eventually where we are going to pull the type from the file
+      k++;                // here k marks the index in the level->type array. This array holds every block, row first, then column.          
       switch(level->type[k]){
           // there is only one start
         case 1:
@@ -290,19 +300,32 @@ void create_simedges_whole(level_info* level){
   
 }
 
-// helper function that just tells us the next location.
-location move(location original_source, char direction, level_info* level) {
+// helper function that just builds us the next location for evaluation
+location move_virtual(location original_source, char direction, level_info* level) {
 
-
-    // this function gets the next location, also checks for the boundary
+    // this function gets the next location, marking it if we hit the boundary
     location target_location = get_move_target(original_source, direction, level);
     
     // check return value to make sure that we didn't hit a boundary.
-    if (target_location = INVALID_LOCATION) {
-    return INVALID_LOCATION
+    if (target_location.type == NOT_A_BLOCK) {
+        return INVALID_LOCATION;
+    }
+    return target_location;
+}
+
+// helper function that just builds us the next location for actual movement
+location move_actual(location original_source, char direction, level_info* level) {
+
+    // this function gets the next location, marking it if we hit the boundary
+    location target_location = get_move_target(original_source, direction, level);
+
+    // check return value to make sure that we didn't hit a boundary.
+    if (target_location.type == NOT_A_BLOCK) {
+        return INVALID_LOCATION;
     }
 
-    
+
+    return target_location;
 
 
 }
@@ -351,10 +374,24 @@ location get_move_target(location original_source, char direction, level_info* l
       return lookup_location_with_xy(&temp, level);
 }
 
+// helps us by getting the location struct for specific grid coordintes
 location lookup_location_with_xy(proto_location *grid, level_info* level) {
     
+    location found_location = {};
 
+    found_location.x = grid->x;
+    found_location.y = grid->y;
 
+    found_location.type = find_type_with_xy(grid);
+    return found_location;
+}
+
+// helps us by getting the coordinate's type from coordinates
+char find_type_with_xy(proto_location* grid, level_info* level) {
+
+    // rows, then columns, therefore multiply the number of rows by how far down we are
+    // minus the current row, then add how many to the right we are in that row.
+    return level->type[(((grid->y - 1) * level->row_count) + grid->x)];
 }
 
 find_areas() {  
@@ -362,16 +399,17 @@ find_areas() {
 }
         
 node_search(location initial, level_info* level) {
-  grid_group result = {};
-  for (int i = 0; i < [MAX_GRID_SIZE])
-    if (initial.x == level->node_incomplete.xy.x && initial.y == level->node_incomplete.xy.y) {
-      result.count = 0
-      return grid_group;
+
+    grid_group result = {};
+    for (int i = 0; i < [MAX_GRID_SIZE]) {
+
     }
-  }
 }
 
 void append_grid_group {
 
 }
 
+
+// eventually we should write a "test" list class, which is a container of something
+// this will allow us to set up comparisons later.
